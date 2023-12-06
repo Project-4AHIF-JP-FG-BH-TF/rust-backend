@@ -19,6 +19,8 @@ async fn greet(
     // IGNORE
     let _ = state.pool.size();
 
+    let _date = sqlx::query!("SELECT NOW() as now");
+
     let name = params.get("name").cloned();
 
     match services::example_service::greet(name).await {
