@@ -1,11 +1,10 @@
-use crate::utils::shared_state::{AppState, SharedState};
-use crate::{services};
+use crate::services;
+use crate::utils::shared_state::SharedState;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::routing::get;
-use axum::{Router};
+use axum::Router;
 use std::collections::HashMap;
-use std::sync::Arc;
 
 pub fn get_router(shared_state: SharedState) -> Router {
     Router::new()
@@ -17,6 +16,9 @@ async fn greet(
     State(state): State<SharedState>,
     Query(params): Query<HashMap<String, String>>,
 ) -> (StatusCode, String) {
+    // IGNORE
+    let _ = state.pool.size();
+
     let name = params.get("name").cloned();
 
     match services::example_service::greet(name).await {

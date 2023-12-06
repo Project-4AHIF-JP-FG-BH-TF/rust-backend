@@ -1,5 +1,5 @@
-use crate::{stores, utils};
 use crate::utils::backend_error::BackendError;
+use crate::{stores, utils};
 use axum::http::StatusCode;
 
 pub async fn greet(name: Option<String>) -> Result<String, BackendError> {

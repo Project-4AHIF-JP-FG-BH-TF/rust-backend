@@ -1,6 +1,6 @@
-use std::sync::Arc;
-use sqlx::{Pool, Postgres};
 use sqlx::postgres::PgPoolOptions;
+use sqlx::{Pool, Postgres};
+use std::sync::Arc;
 
 pub type SharedState = Arc<AppState>;
 
@@ -15,5 +15,5 @@ pub async fn new_shared_state() -> SharedState {
 }
 
 pub struct AppState {
-    pub(crate) pool: Pool<Postgres>
+    pub(crate) pool: Pool<Postgres>,
 }
