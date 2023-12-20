@@ -12,12 +12,7 @@ async fn main() {
     dotenv().ok();
 
     let port = std::env::var("PORT").unwrap_or("8000".to_string());
-    let port = match port.parse::<u32>() {
-        Ok(port) => port,
-        Err(_err) => {
-            panic!("Invalid port passed")
-        }
-    };
+    let port = port.parse::<u32>().expect("Invalid port passed");
 
     let shared_state = new_shared_state().await;
 
