@@ -1,12 +1,12 @@
 use crate::utils::shared_state::new_shared_state;
 use axum::Router;
+use dotenv::dotenv;
 use tower::ServiceBuilder;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
 use tower_http::LatencyUnit;
 use tracing::Level;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use dotenv::dotenv;
 
 mod controllers;
 mod services;
