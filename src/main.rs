@@ -1,5 +1,6 @@
 use crate::utils::shared_state::new_shared_state;
 use axum::Router;
+use dotenv::dotenv;
 use tower::ServiceBuilder;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
 use tower_http::LatencyUnit;
@@ -17,6 +18,11 @@ async fn main() {
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())
         .init();
+
+    dotenv().ok();
+
+    let port = std::env::var("PORT").unwrap_or("8000".to_string());
+    let port = port.parse::<u32>().expect("Invalid port passed");
 
     let shared_state = new_shared_state().await;
     let app = Router::new()
@@ -37,7 +43,9 @@ async fn main() {
             ),
         );
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
-    println!("Listening on port 8000");
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
+        .await
+        .unwrap();
+    println!("Listening on port {}", port);
     axum::serve(listener, app).await.unwrap();
 }
