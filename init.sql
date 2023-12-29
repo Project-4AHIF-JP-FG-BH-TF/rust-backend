@@ -1,15 +1,15 @@
 -- DROP EVERYTHING
-DROP TABLE IF EXISTS "loggaroo".log_entry;
-DROP TABLE IF EXISTS "loggaroo".file;
-DROP TABLE IF EXISTS "loggaroo".session;
+DROP TABLE IF EXISTS loggaroo.log_entry;
+DROP TABLE IF EXISTS loggaroo.file;
+DROP TABLE IF EXISTS loggaroo.session;
 DROP TYPE IF EXISTS classification;
 
-DROP SCHEMA IF EXISTS "loggaroo";
+DROP SCHEMA IF EXISTS loggaroo;
 
 -- CREATE EVERYTHING
-CREATE SCHEMA "loggaroo";
+CREATE SCHEMA loggaroo;
 
-CREATE TABLE "loggaroo".session
+CREATE TABLE loggaroo.session
 (
     session_id   UUID NOT NULL DEFAULT GEN_RANDOM_UUID(),
     last_refresh DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -17,7 +17,7 @@ CREATE TABLE "loggaroo".session
     CONSTRAINT pk_session PRIMARY KEY (session_id)
 );
 
-CREATE TABLE "loggaroo".file
+CREATE TABLE loggaroo.file
 (
     session_id           UUID    NOT NULL,
     file_name            VARCHAR NOT NULL,
@@ -26,11 +26,11 @@ CREATE TABLE "loggaroo".file
     uploaded_chunk_count INT     NOT NULL DEFAULT 0,
 
     CONSTRAINT pk_file PRIMARY KEY (session_id, file_name),
-    CONSTRAINT fk_session_id FOREIGN KEY (session_id) REFERENCES "loggaroo".session (session_id) ON DELETE CASCADE
+    CONSTRAINT fk_session_id FOREIGN KEY (session_id) REFERENCES loggaroo.session (session_id) ON DELETE CASCADE
 );
 
 CREATE TYPE classification AS ENUM ('info', 'error');
-CREATE TABLE "loggaroo".log_entry
+CREATE TABLE loggaroo.log_entry
 (
     session_id      UUID           NOT NULL,
     file_name       VARCHAR        NOT NULL,
@@ -44,5 +44,5 @@ CREATE TABLE "loggaroo".log_entry
     content         VARCHAR        NOT NULL,
 
     CONSTRAINT pk_entry PRIMARY KEY (session_id, file_name, entry_nr),
-    CONSTRAINT fk_session_id FOREIGN KEY (session_id, file_name) REFERENCES "loggaroo".file (session_id, file_name) ON DELETE CASCADE
+    CONSTRAINT fk_session_id FOREIGN KEY (session_id, file_name) REFERENCES loggaroo.file (session_id, file_name) ON DELETE CASCADE
 );
