@@ -1,7 +1,3 @@
--- ONLY ONCE
--- SELECT IT
-CREATE DATABASE loggaroo;
-
 -- DROP EVERYTHING
 DROP TABLE IF EXISTS "loggaroo".log_entry;
 DROP TABLE IF EXISTS "loggaroo".file;
