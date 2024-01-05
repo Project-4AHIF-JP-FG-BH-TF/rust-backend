@@ -15,8 +15,8 @@ CREATE SCHEMA "loggaroo";
 
 CREATE TABLE "loggaroo".session
 (
-    session_id   UUID NOT NULL DEFAULT GEN_RANDOM_UUID(),
-    last_refresh DATE NOT NULL DEFAULT CURRENT_DATE,
+    session_id   UUID      NOT NULL DEFAULT GEN_RANDOM_UUID(),
+    last_refresh TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT pk_session PRIMARY KEY (session_id)
 );
@@ -39,7 +39,7 @@ CREATE TABLE "loggaroo".log_entry
     session_id      UUID           NOT NULL,
     file_name       VARCHAR        NOT NULL,
     entry_nr        INT            NOT NULL,
-    creation_date   DATE           NOT NULL,
+    creation_date   TIMESTAMP      NOT NULL,
     classification  CLASSIFICATION NOT NULL,
     service_ip      VARCHAR        NOT NULL,
     user_id         VARCHAR        NOT NULL,
