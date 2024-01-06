@@ -28,7 +28,7 @@ This validates your query (NEED THE DATABASE TO RUN). It is also run when buildi
 
 to run the docker container locally 
 
-you need to set the DATABASE_URL to your local ip \
+you need to change the DATABASE_URL entry in your `.env` so that it uses your local ip \
 to find you local ip use the `ipconfig` command
 
 then run the following commands
