@@ -21,7 +21,18 @@ More under ['sqlx documentation'](https://docs.rs/sqlx/latest/sqlx/)
 
 ### Check Queries
 
-To check if a query is valid you can run ```cargo sqlx prepare``` \
+To check if a query is valid you can run `cargo sqlx prepare` \
 This validates your query (NEED THE DATABASE TO RUN). It is also run when building.
 
+## Docker
 
+to run the docker container locally 
+
+you need to set the DATABASE_URL to your local ip \
+to find you local ip use the `ipconfig` command
+
+then run the following commands
+
+`docker build -t rust-backend .`
+
+`docker run -p 8000:8000 rust-backend`
