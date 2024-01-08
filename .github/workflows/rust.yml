@@ -15,12 +15,10 @@ jobs:
     services:
       postgres:
         image: postgres:14.1-alpine
-        environment:
+        env:
           - POSTGRES_USER=admin
           - POSTGRES_PASSWORD=admin
           - POSTGRES_DB=loggaroo
-        ports:
-          - '5432:5432'
         volumes:
           - db:/var/lib/postgresql/data
           - ./init.sql:/docker-entrypoint-initdb.d/init.sql
