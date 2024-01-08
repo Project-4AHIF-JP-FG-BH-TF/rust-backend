@@ -12,16 +12,15 @@ env:
 
 jobs:
   build:
+    # Service containers to run with `container-job`
     services:
+      # Label used to access the service container
       postgres:
-        image: postgres:14.1-alpine
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
         env:
-          - POSTGRES_USER=admin
-          - POSTGRES_PASSWORD=admin
-          - POSTGRES_DB=loggaroo
-        volumes:
-          - db:/var/lib/postgresql/data
-          - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+          POSTGRES_PASSWORD: postgres
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
