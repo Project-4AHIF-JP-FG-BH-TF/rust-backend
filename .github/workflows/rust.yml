@@ -17,13 +17,13 @@ jobs:
       # Label used to access the service container
       postgres:
         image: postgres
-        env:
-          POSTGRES_USER: admin
-          POSTGRES_PASSWORD: admin
-          POSTGRES_DB: loggaroo
+        environment:
+          - POSTGRES_USER=admin
+          - POSTGRES_PASSWORD=admin
+          - POSTGRES_DB=loggaroo
         volumes:
           - db:/var/lib/postgresql/data
-          - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+          - ./sql/init.sql:/docker-entrypoint-initdb.d/db.sql
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
