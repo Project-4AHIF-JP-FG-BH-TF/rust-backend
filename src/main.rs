@@ -5,6 +5,7 @@ use tower::ServiceBuilder;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
 use tower_http::LatencyUnit;
 use tracing::Level;
+use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
@@ -16,7 +17,8 @@ mod utils;
 #[tokio::main]
 async fn main() {
     tracing_subscriber::registry()
-        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::fmt::layer().with_level(true))
+        .with(LevelFilter::INFO)
         .init();
 
     dotenv().ok();
@@ -29,6 +31,10 @@ async fn main() {
         .nest(
             "/example",
             controllers::example_controller::get_router(shared_state.clone()),
+        )
+        .nest(
+            "/file",
+            controllers::file_controller::get_router(shared_state.clone()),
         )
         .layer(
             ServiceBuilder::new().layer(
