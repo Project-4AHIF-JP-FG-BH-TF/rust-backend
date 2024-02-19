@@ -1,7 +1,9 @@
 use crate::utils::shared_state::new_shared_state;
+use axum::http::Method;
 use axum::Router;
 use dotenv::dotenv;
 use tower::ServiceBuilder;
+use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
 use tower_http::LatencyUnit;
 use tracing::Level;
@@ -16,12 +18,16 @@ mod utils;
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
+
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer().with_level(true))
         .with(LevelFilter::INFO)
         .init();
 
-    dotenv().ok();
+    let cors = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST])
+        .allow_origin(Any);
 
     let port = std::env::var("PORT").unwrap_or("8000".to_string());
     let port = port.parse::<u32>().expect("Invalid port passed");
@@ -47,7 +53,8 @@ async fn main() {
                             .latency_unit(LatencyUnit::Micros),
                     ),
             ),
-        );
+        )
+        .layer(cors);
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
         .await
