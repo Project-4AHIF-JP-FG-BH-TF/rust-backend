@@ -48,6 +48,7 @@ pub async fn extract_zip(mut multipart: Multipart) -> Result<(), (StatusCode, St
                 .read_to_string(&mut content)
                 .map_err(|_| internal_error("Failed to read content of archive entry to string"))?;
 
+            // TODO TMP
             println!("{} - {} Bytes", name, content.len());
         }
     }
