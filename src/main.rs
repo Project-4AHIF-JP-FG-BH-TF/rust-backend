@@ -35,12 +35,16 @@ async fn main() {
     let shared_state = new_shared_state().await;
     let app = Router::new()
         .nest(
-            "/example",
-            controllers::example_controller::get_router(shared_state.clone()),
-        )
-        .nest(
-            "/file",
-            controllers::file_controller::get_router(shared_state.clone()),
+            "/api",
+            Router::new()
+                .nest(
+                    "/example",
+                    controllers::example_controller::get_router(shared_state.clone()),
+                )
+                .nest(
+                    "/file",
+                    controllers::file_controller::get_router(shared_state.clone()),
+                ),
         )
         .layer(
             ServiceBuilder::new().layer(
