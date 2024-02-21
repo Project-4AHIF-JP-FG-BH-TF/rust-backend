@@ -8,6 +8,10 @@ fn internal_error<S: Into<String>>(message: S) -> (StatusCode, String) {
     (StatusCode::INTERNAL_SERVER_ERROR, message.into())
 }
 
+fn bad_request<S: Into<String>>(message: S) -> (StatusCode, String) {
+    (StatusCode::BAD_REQUEST, message.into())
+}
+
 pub async fn extract_zip(mut multipart: Multipart) -> Result<(), (StatusCode, String)> {
     loop {
         let field = match multipart
@@ -54,7 +58,7 @@ pub async fn extract_zip(mut multipart: Multipart) -> Result<(), (StatusCode, St
                     println!("{} - {} Bytes", name, content.len());
                 }
                 Err(_) => {
-                    return Err(internal_error("Invalid file found"));
+                    return Err(bad_request("Invalid file found"));
                 }
             }
         }
