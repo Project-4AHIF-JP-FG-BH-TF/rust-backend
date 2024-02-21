@@ -37,11 +37,11 @@ CREATE TABLE loggaroo.log_entry
     entry_nr        INT            NOT NULL,
     creation_date   TIMESTAMP      NOT NULL,
     classification  CLASSIFICATION NOT NULL,
-    service_ip      VARCHAR        NOT NULL,
-    user_id         VARCHAR        NOT NULL,
-    user_session_id VARCHAR        NOT NULL,
+    service_ip      VARCHAR,
+    user_id         VARCHAR,
+    user_session_id VARCHAR,
     java_class      VARCHAR        NOT NULL,
-    content         VARCHAR        NOT NULL,
+    content         VARCHAR,
 
     CONSTRAINT pk_entry PRIMARY KEY (session_id, file_name, entry_nr),
     CONSTRAINT fk_session_id FOREIGN KEY (session_id, file_name) REFERENCES loggaroo.file (session_id, file_name) ON DELETE CASCADE
