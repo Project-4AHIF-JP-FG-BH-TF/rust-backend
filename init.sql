@@ -42,6 +42,10 @@ CREATE TABLE loggaroo.log_entry
     user_session_id VARCHAR,
     java_class      VARCHAR        NOT NULL,
     content         VARCHAR,
+    sql_combined    VARCHAR,
+    sql_raw         VARCHAR,
+    sql_data        VARCHAR,
+
 
     CONSTRAINT pk_entry PRIMARY KEY (session_id, file_name, entry_nr),
     CONSTRAINT fk_session_id FOREIGN KEY (session_id, file_name) REFERENCES loggaroo.file (session_id, file_name) ON DELETE CASCADE
