@@ -54,8 +54,8 @@ pub async fn extract_zip(mut multipart: Multipart) -> Result<(), (StatusCode, St
                         internal_error("Failed to read content of archive entry to string")
                     })?;
 
-                    // TODO TMP
-                    println!("{} - {} Bytes", name, content.len());
+                    let mut lines = content.lines();
+
                 }
                 Err(_) => {
                     return Err(bad_request("Invalid file found"));
