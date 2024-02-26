@@ -1,10 +1,7 @@
 use axum::extract::Multipart;
 use axum::http::StatusCode;
 use std::io::Read;
-use std::rc::Rc;
-use std::sync::Arc;
 use tar::Archive;
-use tracing::info;
 use xz::read::XzDecoder;
 
 fn internal_error<S: Into<String>>(message: S) -> (StatusCode, String) {
