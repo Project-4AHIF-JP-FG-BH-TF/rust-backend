@@ -41,8 +41,7 @@ CREATE TABLE loggaroo.log_entry
     user_id         VARCHAR,
     user_session_id VARCHAR,
     java_class      VARCHAR        NOT NULL,
-    content         VARCHAR,
-    sql_combined    VARCHAR,
+    content         VARCHAR        NOT NULL,
     sql_raw         VARCHAR,
     sql_data        VARCHAR,
 
