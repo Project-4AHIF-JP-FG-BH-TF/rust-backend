@@ -13,6 +13,8 @@ fn bad_request<S: Into<String>>(message: S) -> (StatusCode, String) {
 }
 
 pub async fn extract_zip(mut multipart: Multipart) -> Result<(), (StatusCode, String)> {
+    let mut thread_handles = vec![];
+
     loop {
         let field = match multipart
             .next_field()
@@ -23,45 +25,58 @@ pub async fn extract_zip(mut multipart: Multipart) -> Result<(), (StatusCode, St
             Some(field) => field,
         };
 
-        let data = field
+        let bytes = field
             .bytes()
             .await
             .map_err(|_| internal_error("Encountered error while receiving data"))?;
 
-        let tar = XzDecoder::new(data.as_ref());
-        let mut archive = Archive::new(tar);
+        let handle = tokio::spawn(async move {
+            let tar = XzDecoder::new(bytes.as_ref());
+            let mut archive = Archive::new(tar);
 
-        let entries = archive
-            .entries()
-            .map_err(|_| internal_error("Failed to get entries of archive"))?;
+            let entries = archive
+                .entries()
+                .map_err(|_| internal_error("Failed to get entries of archive"))?;
 
-        for entry in entries {
-            match entry {
-                Ok(mut entry) => {
-                    let name = entry
-                        .path()
-                        .iter()
-                        .filter_map(|p| p.file_name())
-                        .filter_map(|n| n.to_str())
-                        .map(|n| n.to_string())
-                        .next();
+            for entry in entries {
+                match entry {
+                    Ok(mut entry) => {
+                        let name = entry
+                            .path()
+                            .iter()
+                            .filter_map(|p| p.file_name())
+                            .filter_map(|n| n.to_str())
+                            .map(|n| n.to_string())
+                            .next();
 
-                    let name = name
-                        .ok_or_else(|| internal_error("Couldn't read name of entry in archive"))?;
+                        let name = name.ok_or_else(|| {
+                            internal_error("Couldn't read name of entry in archive")
+                        })?;
 
-                    let mut content = String::with_capacity(entry.size() as usize);
-                    let _ = entry.read_to_string(&mut content).map_err(|_| {
-                        internal_error("Failed to read content of archive entry to string")
-                    })?;
+                        let mut content = String::with_capacity(entry.size() as usize);
+                        let _ = entry.read_to_string(&mut content).map_err(|_| {
+                            internal_error("Failed to read content of archive entry to string")
+                        })?;
 
-                    // TODO TMP
-                    println!("{} - {} Bytes", name, content.len());
-                }
-                Err(_) => {
-                    return Err(bad_request("Invalid file found"));
+                        // TODO TMP
+                        println!("{} - {} Bytes", name, content.len());
+                    }
+                    Err(_) => {
+                        return Err(bad_request("Invalid file found"));
+                    }
                 }
             }
-        }
+
+            Ok(())
+        });
+
+        thread_handles.push(handle);
+    }
+
+    for handle in thread_handles {
+        handle
+            .await
+            .map_err(|_| internal_error("Encountered error while receiving data"))??;
     }
     Ok(())
 }
