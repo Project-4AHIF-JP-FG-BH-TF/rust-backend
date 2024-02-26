@@ -2,6 +2,7 @@ use axum::extract::Multipart;
 use axum::http::StatusCode;
 use std::io::Read;
 use tar::Archive;
+use tracing::info;
 use xz::read::XzDecoder;
 
 fn internal_error<S: Into<String>>(message: S) -> (StatusCode, String) {
@@ -12,7 +13,12 @@ fn bad_request<S: Into<String>>(message: S) -> (StatusCode, String) {
     (StatusCode::BAD_REQUEST, message.into())
 }
 
-pub async fn extract_zip(mut multipart: Multipart) -> Result<(), (StatusCode, String)> {
+pub async fn extract_zip(
+    mut multipart: Multipart,
+    session_id: String,
+) -> Result<(), (StatusCode, String)> {
+    info!("uploading files for session: {}", session_id);
+
     loop {
         let field = match multipart
             .next_field()
