@@ -14,6 +14,7 @@ use tracing_subscriber::util::SubscriberInitExt;
 mod controllers;
 mod services;
 mod stores;
+mod types;
 mod utils;
 
 #[tokio::main]

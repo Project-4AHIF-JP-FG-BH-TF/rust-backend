@@ -1,3 +1,4 @@
+use regex::{Captures, Regex};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env::var;
@@ -14,9 +15,25 @@ pub async fn new_shared_state() -> SharedState {
         .await
         .expect("Failed to connect to db");
 
-    Arc::new(AppState { pool })
+    Arc::new(AppState {
+        pool,
+        message_regex: message_regex(),
+    })
+}
+
+fn message_regex() -> Regex {
+    let date_part = r"\d+-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}";
+    let classification_part = r"[a-zA-Z]+";
+    let ip_part = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s*";
+    let user_id_part = r"\d{5}\s*";
+    let session_id_part = r"[A-Z1-9]{4} \d{3}\s*";
+    let java_class_part = r"\S*\s*";
+    let content_part = r".*";
+
+    Regex::new(&format!(r"^({date_part})\s*({classification_part})\s*\[({ip_part})?\s*]\s*\[({user_id_part})?\s*]\s*\[({session_id_part})?\s*]\s*\[({java_class_part})\s*]\s*({content_part})$")).unwrap()
 }
 
 pub struct AppState {
     pub(crate) pool: Pool<Postgres>,
+    pub(crate) message_regex: Regex,
 }
