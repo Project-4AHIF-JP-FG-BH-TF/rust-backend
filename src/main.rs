@@ -1,7 +1,7 @@
 use crate::utils::shared_state::new_shared_state;
 use axum::http::Method;
 use axum::Router;
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
@@ -14,8 +14,9 @@ use tracing_subscriber::util::SubscriberInitExt;
 mod controllers;
 mod services;
 mod stores;
-mod types;
 mod utils;
+mod schema;
+mod models;
 
 #[tokio::main]
 async fn main() {

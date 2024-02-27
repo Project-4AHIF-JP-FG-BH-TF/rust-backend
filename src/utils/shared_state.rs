@@ -1,6 +1,6 @@
-use regex::{Captures, Regex};
-use sqlx::postgres::PgPoolOptions;
-use sqlx::{Pool, Postgres};
+use deadpool_diesel::postgres::Pool;
+use deadpool_diesel::Manager;
+use regex::Regex;
 use std::env::var;
 use std::sync::Arc;
 
@@ -9,14 +9,14 @@ pub type SharedState = Arc<AppState>;
 pub async fn new_shared_state() -> SharedState {
     let database_url = var("DATABASE_URL").expect("No DatabaseURL provided!");
 
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&database_url)
-        .await
-        .expect("Failed to connect to db");
+    let manager = Manager::new(database_url, deadpool_diesel::Runtime::Tokio1);
+
+    let pool = Pool::builder(manager)
+        .build()
+        .expect("Failed to connect to db!");
 
     Arc::new(AppState {
-        pool,
+        pool: Arc::new(pool),
         message_regex: message_regex(),
     })
 }
@@ -33,7 +33,8 @@ fn message_regex() -> Regex {
     Regex::new(&format!(r"^({date_part})\s*({classification_part})\s*\[({ip_part})?\s*]\s*\[({user_id_part})?\s*]\s*\[({session_id_part})?\s*]\s*\[({java_class_part})\s*]\s*({content_part})$")).unwrap()
 }
 
+#[derive(Clone)]
 pub struct AppState {
-    pub(crate) pool: Pool<Postgres>,
-    pub(crate) message_regex: Regex,
+    pub pool: Arc<Pool>,
+    pub message_regex: Regex,
 }

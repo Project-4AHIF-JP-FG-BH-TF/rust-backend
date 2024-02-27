@@ -1,18 +1,17 @@
+use crate::models::loggaroo::{File, LogMessage};
 use crate::stores;
-use crate::types::tmp_message::TmpMessage;
 use crate::utils::shared_state::SharedState;
-use axum::extract::{Multipart, State};
+use axum::extract::Multipart;
 use axum::http::StatusCode;
 use rayon::iter::ParallelBridge;
 use rayon::iter::ParallelIterator;
-use regex::{Captures, Regex};
-use sqlx::types::time::Date;
+use regex::Regex;
 use std::io::Read;
 use tar::Archive;
 use time::macros::format_description;
 use time::PrimitiveDateTime;
 use tracing::debug;
-use tracing::info;
+use uuid::Uuid;
 use xz::read::XzDecoder;
 
 fn internal_error<S: Into<String>>(message: S) -> (StatusCode, String) {
@@ -29,6 +28,11 @@ pub async fn extract_zip(
     state: SharedState,
 ) -> Result<(), (StatusCode, String)> {
     debug!("uploading files for session: {}", session_id.clone());
+
+    let uuid = Uuid::parse_str(&session_id).unwrap();
+
+    let mut all_messages: Vec<LogMessage> = vec![];
+    let mut files: Vec<File> = vec![];
 
     loop {
         let field = match multipart
@@ -66,6 +70,14 @@ pub async fn extract_zip(
                     let name = name
                         .ok_or_else(|| internal_error("Couldn't read name of entry in archive"))?;
 
+                    files.push(File {
+                        session_id: uuid,
+                        file_name: name.clone(),
+                        hash: "".to_string(),
+                        chunk_count: 0,
+                        uploaded_chunk_count: 0,
+                    });
+
                     debug!("Starting to read content from file {}", name);
 
                     let mut content = String::with_capacity(entry.size() as usize);
@@ -77,23 +89,19 @@ pub async fn extract_zip(
 
                     debug!("Started parsing");
 
-                    let messages: Vec<_> = content
+                    let mut messages: Vec<_> = content
                         .lines()
-                        .take(10)
+                        .enumerate()
+                        //todo fix
+                        .take(5000)
                         .par_bridge()
-                        .map(|line| parse_line(line, &state.message_regex))
+                        .map(|(index, line)| {
+                            parse_line(uuid, name.clone(), index, line, &state.message_regex)
+                        })
                         .filter_map(|message| message)
                         .collect();
 
-                    debug!("Finished parsing");
-
-                    stores::file_store::store_messages(
-                        &state.pool,
-                        session_id.clone(),
-                        name,
-                        &messages,
-                    )
-                    .await;
+                    all_messages.append(&mut messages);
                 }
                 Err(_) => {
                     return Err(bad_request("Invalid file found"));
@@ -101,10 +109,22 @@ pub async fn extract_zip(
             }
         }
     }
+
+    println!("{:?}", files);
+
+    stores::file_store::store_files(files, &state.pool).await;
+    stores::file_store::store_messages(all_messages, &state.pool).await;
+
     Ok(())
 }
 
-fn parse_line(line: &str, message_regex: &Regex) -> Option<TmpMessage> {
+fn parse_line(
+    session_id: Uuid,
+    file_name: String,
+    index: usize,
+    line: &str,
+    message_regex: &Regex,
+) -> Option<LogMessage> {
     message_regex.captures(line).map(|captures| {
         let mut captures = captures
             .iter()
@@ -116,14 +136,19 @@ fn parse_line(line: &str, message_regex: &Regex) -> Option<TmpMessage> {
         let date =
             PrimitiveDateTime::parse(&captures.next().unwrap().unwrap(), date_format).unwrap();
 
-        TmpMessage::new(
-            date,
-            captures.next().unwrap().unwrap(),
-            captures.next().unwrap(),
-            captures.next().unwrap(),
-            captures.next().unwrap(),
-            captures.next().unwrap().unwrap(),
-            captures.next().unwrap().unwrap(),
-        )
+        LogMessage {
+            session_id,
+            file_name,
+            entry_nr: index as i32,
+            creation_date: date,
+            classification: captures.next().unwrap().unwrap().to_lowercase(),
+            service_ip: captures.next().unwrap(),
+            user_id: captures.next().unwrap(),
+            user_session_id: captures.next().unwrap(),
+            java_class: captures.next().unwrap().unwrap(),
+            content: captures.next().unwrap().unwrap(),
+            sql_raw: None,
+            sql_data: None,
+        }
     })
 }
