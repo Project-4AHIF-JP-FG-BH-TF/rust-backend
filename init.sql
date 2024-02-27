@@ -49,3 +49,6 @@ CREATE TABLE loggaroo.log_entry
     CONSTRAINT pk_entry PRIMARY KEY (session_id, file_name, entry_nr),
     CONSTRAINT fk_session_id FOREIGN KEY (session_id, file_name) REFERENCES loggaroo.file (session_id, file_name) ON DELETE CASCADE
 );
+
+INSERT INTO loggaroo.log_entry(session_id, file_name, entry_nr, creation_date, classification, service_ip, user_id, user_session_id, java_class, content)
+VALUES ('', '', 0, '', '', '', '', '', '', '');

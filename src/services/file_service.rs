@@ -1,16 +1,17 @@
+use crate::stores;
 use crate::types::tmp_message::TmpMessage;
 use axum::extract::Multipart;
 use axum::http::StatusCode;
 use rayon::iter::ParallelBridge;
 use rayon::iter::ParallelIterator;
 use regex::{Captures, Regex};
-use std::io::Read;
 use sqlx::types::time::Date;
+use std::io::Read;
 use tar::Archive;
-use tracing::info;
-use xz::read::XzDecoder;
 use time::macros::format_description;
 use tracing::debug;
+use tracing::info;
+use xz::read::XzDecoder;
 
 fn internal_error<S: Into<String>>(message: S) -> (StatusCode, String) {
     (StatusCode::INTERNAL_SERVER_ERROR, message.into())
@@ -25,7 +26,7 @@ pub async fn extract_zip(
     message_regex: &Regex,
     session_id: String,
 ) -> Result<(), (StatusCode, String)> {
-    info!("uploading files for session: {}", session_id);
+    debug!("uploading files for session: {}", session_id.clone());
 
     loop {
         let field = match multipart
@@ -76,13 +77,15 @@ pub async fn extract_zip(
 
                     let messages: Vec<_> = content
                         .lines()
+                        .take(10)
                         .par_bridge()
                         .map(|line| parse_line(line, message_regex))
+                        .filter_map(|message| message)
                         .collect();
 
                     debug!("Finished parsing");
 
-
+                    stores::file_store::store_messages(session_id.clone(), name, &messages);
                 }
                 Err(_) => {
                     return Err(bad_request("Invalid file found"));
@@ -95,12 +98,13 @@ pub async fn extract_zip(
 
 fn parse_line(line: &str, message_regex: &Regex) -> Option<TmpMessage> {
     message_regex.captures(line).map(|captures| {
-        let mut captures = captures.iter()
+        let mut captures = captures
+            .iter()
             .skip(1)
             .map(|capture| capture.map(|match_| match_.as_str().trim().to_string()));
 
-
-        let date_format = format_description!("[year]-[month]-[day] [hour]:[minute]:[second],[subsecond]");
+        let date_format =
+            format_description!("[year]-[month]-[day] [hour]:[minute]:[second],[subsecond]");
         let date = Date::parse(&captures.next().unwrap().unwrap(), date_format).unwrap();
 
         TmpMessage::new(

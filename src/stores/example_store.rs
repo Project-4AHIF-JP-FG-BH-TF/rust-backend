@@ -1,1 +1,3 @@
-pub async fn do_something() {}
+pub async fn do_something() {
+
+}
