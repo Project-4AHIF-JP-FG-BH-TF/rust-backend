@@ -1,8 +1,9 @@
 use sqlx::types::time::Date;
+use time::PrimitiveDateTime;
 
 #[derive(Debug)]
 pub struct TmpMessage {
-    pub creation_date: Date,
+    pub creation_date: PrimitiveDateTime,
     pub classification: String,
     pub service_ip: Option<String>,
     pub user_id: Option<String>,
@@ -12,7 +13,7 @@ pub struct TmpMessage {
 }
 
 impl TmpMessage {
-    pub fn new(creation_date: Date, classification: String, service_ip: Option<String>, user_id: Option<String>, user_session_id: Option<String>, java_class: String, content: String) -> Self {
+    pub fn new(creation_date: PrimitiveDateTime, classification: String, service_ip: Option<String>, user_id: Option<String>, user_session_id: Option<String>, java_class: String, content: String) -> Self {
         Self { creation_date, classification, service_ip, user_id, user_session_id, java_class, content }
     }
 }

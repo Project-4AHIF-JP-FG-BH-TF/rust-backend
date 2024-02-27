@@ -13,11 +13,11 @@ pub fn get_router(shared_state: SharedState) -> Router {
 }
 
 async fn upload(
-    State(state): State<SharedState>,
     Path(sessions_id): Path<String>,
+    State(state): State<SharedState>,
     multipart: Multipart,
 ) -> (StatusCode, String) {
-    match services::file_service::extract_zip(multipart, &state.message_regex, sessions_id).await {
+    match services::file_service::extract_zip(multipart, sessions_id, state.clone()).await {
         Ok(_) => (StatusCode::OK, String::from("Was successfully uploaded!")),
         Err(err) => err,
     }

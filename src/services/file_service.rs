@@ -1,6 +1,7 @@
 use crate::stores;
 use crate::types::tmp_message::TmpMessage;
-use axum::extract::Multipart;
+use crate::utils::shared_state::SharedState;
+use axum::extract::{Multipart, State};
 use axum::http::StatusCode;
 use rayon::iter::ParallelBridge;
 use rayon::iter::ParallelIterator;
@@ -9,6 +10,7 @@ use sqlx::types::time::Date;
 use std::io::Read;
 use tar::Archive;
 use time::macros::format_description;
+use time::PrimitiveDateTime;
 use tracing::debug;
 use tracing::info;
 use xz::read::XzDecoder;
@@ -23,8 +25,8 @@ fn bad_request<S: Into<String>>(message: S) -> (StatusCode, String) {
 
 pub async fn extract_zip(
     mut multipart: Multipart,
-    message_regex: &Regex,
     session_id: String,
+    state: SharedState,
 ) -> Result<(), (StatusCode, String)> {
     debug!("uploading files for session: {}", session_id.clone());
 
@@ -79,13 +81,19 @@ pub async fn extract_zip(
                         .lines()
                         .take(10)
                         .par_bridge()
-                        .map(|line| parse_line(line, message_regex))
+                        .map(|line| parse_line(line, &state.message_regex))
                         .filter_map(|message| message)
                         .collect();
 
                     debug!("Finished parsing");
 
-                    stores::file_store::store_messages(session_id.clone(), name, &messages);
+                    stores::file_store::store_messages(
+                        &state.pool,
+                        session_id.clone(),
+                        name,
+                        &messages,
+                    )
+                    .await;
                 }
                 Err(_) => {
                     return Err(bad_request("Invalid file found"));
@@ -105,7 +113,8 @@ fn parse_line(line: &str, message_regex: &Regex) -> Option<TmpMessage> {
 
         let date_format =
             format_description!("[year]-[month]-[day] [hour]:[minute]:[second],[subsecond]");
-        let date = Date::parse(&captures.next().unwrap().unwrap(), date_format).unwrap();
+        let date =
+            PrimitiveDateTime::parse(&captures.next().unwrap().unwrap(), date_format).unwrap();
 
         TmpMessage::new(
             date,
