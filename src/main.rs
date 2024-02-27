@@ -12,11 +12,11 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
 mod controllers;
+mod models;
+mod schema;
 mod services;
 mod stores;
 mod utils;
-mod schema;
-mod models;
 
 #[tokio::main]
 async fn main() {
