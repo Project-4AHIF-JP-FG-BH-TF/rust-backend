@@ -8,10 +8,12 @@ pub async fn store_messages(messages: Vec<LogMessage>, pool: &Pool) {
         .await
         .unwrap()
         .interact(move |connection| {
-            diesel::insert_into(schema::loggaroo::log_entry::table)
-                .values(messages)
-                .execute(connection)
-                .unwrap();
+            for messages in messages.chunks(5000) {
+                diesel::insert_into(schema::loggaroo::log_entry::table)
+                    .values(messages)
+                    .execute(connection)
+                    .unwrap();
+            }
         })
         .await
         .unwrap();

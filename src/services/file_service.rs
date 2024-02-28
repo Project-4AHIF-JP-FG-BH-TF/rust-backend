@@ -10,7 +10,7 @@ use std::io::Read;
 use tar::Archive;
 use time::macros::format_description;
 use time::PrimitiveDateTime;
-use tracing::debug;
+use tracing::info;
 use uuid::Uuid;
 use xz::read::XzDecoder;
 
@@ -27,7 +27,7 @@ pub async fn extract_zip(
     session_id: String,
     state: SharedState,
 ) -> Result<(), (StatusCode, String)> {
-    debug!("uploading files for session: {}", session_id.clone());
+    info!("uploading files for session: {}", session_id.clone());
 
     let uuid = Uuid::parse_str(&session_id).unwrap();
 
@@ -78,22 +78,20 @@ pub async fn extract_zip(
                         uploaded_chunk_count: 0,
                     });
 
-                    debug!("Starting to read content from file {}", name);
+                    info!("Starting to read content from file {}", name);
 
                     let mut content = String::with_capacity(entry.size() as usize);
                     let _ = entry.read_to_string(&mut content).map_err(|_| {
                         internal_error("Failed to read content of archive entry to string")
                     })?;
 
-                    debug!("Finished reading content");
+                    info!("Finished reading content");
 
-                    debug!("Started parsing");
+                    info!("Started parsing");
 
                     let mut messages: Vec<_> = content
                         .lines()
                         .enumerate()
-                        //todo fix
-                        .take(5000)
                         .par_bridge()
                         .map(|(index, line)| {
                             parse_line(uuid, name.clone(), index, line, &state.message_regex)
@@ -102,6 +100,8 @@ pub async fn extract_zip(
                         .collect();
 
                     all_messages.append(&mut messages);
+
+                    info!("Finished parsing");
                 }
                 Err(_) => {
                     return Err(bad_request("Invalid file found"));
@@ -112,8 +112,12 @@ pub async fn extract_zip(
 
     println!("{:?}", files);
 
+    info!("Started writing to DB");
+
     stores::file_store::store_files(files, &state.pool).await;
     stores::file_store::store_messages(all_messages, &state.pool).await;
+
+    info!("Finished writing to DB");
 
     Ok(())
 }
