@@ -35,7 +35,7 @@ CREATE TABLE loggaroo.log_entry
     file_name       VARCHAR   NOT NULL,
     entry_nr        INT       NOT NULL,
     creation_date   TIMESTAMP NOT NULL,
-    classification  VARCHAR   NOT NULL CHECK ( classification IN ('info', 'warn') ),
+    classification  VARCHAR   NOT NULL,
     service_ip      VARCHAR,
     user_id         VARCHAR,
     user_session_id VARCHAR,
