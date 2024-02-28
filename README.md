@@ -21,6 +21,8 @@ More under ['sqlx documentation'](https://docs.rs/sqlx/latest/sqlx/)
 
 ### Check Queries
 
+cargo install diesel_cli --no-default-features --features "postgres"
+
 To check if a query is valid you can run `cargo sqlx prepare` \
 This validates your query (NEED THE DATABASE TO RUN). It is also run when building.
 

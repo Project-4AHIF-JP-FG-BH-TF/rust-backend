@@ -1,8 +1,17 @@
+use crate::models::loggaroo::{File, LogMessage};
+use crate::stores;
+use crate::utils::shared_state::SharedState;
 use axum::extract::Multipart;
 use axum::http::StatusCode;
+use rayon::iter::ParallelBridge;
+use rayon::iter::ParallelIterator;
+use regex::Regex;
 use std::io::Read;
 use tar::Archive;
-use tracing::info;
+use time::macros::format_description;
+use time::PrimitiveDateTime;
+use tracing::debug;
+use uuid::Uuid;
 use xz::read::XzDecoder;
 
 fn internal_error<S: Into<String>>(message: S) -> (StatusCode, String) {
@@ -16,8 +25,14 @@ fn bad_request<S: Into<String>>(message: S) -> (StatusCode, String) {
 pub async fn extract_zip(
     mut multipart: Multipart,
     session_id: String,
+    state: SharedState,
 ) -> Result<(), (StatusCode, String)> {
-    info!("uploading files for session: {}", session_id);
+    debug!("uploading files for session: {}", session_id.clone());
+
+    let uuid = Uuid::parse_str(&session_id).unwrap();
+
+    let mut all_messages: Vec<LogMessage> = vec![];
+    let mut files: Vec<File> = vec![];
 
     loop {
         let field = match multipart
@@ -55,13 +70,38 @@ pub async fn extract_zip(
                     let name = name
                         .ok_or_else(|| internal_error("Couldn't read name of entry in archive"))?;
 
+                    files.push(File {
+                        session_id: uuid,
+                        file_name: name.clone(),
+                        hash: "".to_string(),
+                        chunk_count: 0,
+                        uploaded_chunk_count: 0,
+                    });
+
+                    debug!("Starting to read content from file {}", name);
+
                     let mut content = String::with_capacity(entry.size() as usize);
                     let _ = entry.read_to_string(&mut content).map_err(|_| {
                         internal_error("Failed to read content of archive entry to string")
                     })?;
 
-                    // TODO TMP
-                    println!("{} - {} Bytes", name, content.len());
+                    debug!("Finished reading content");
+
+                    debug!("Started parsing");
+
+                    let mut messages: Vec<_> = content
+                        .lines()
+                        .enumerate()
+                        //todo fix
+                        .take(5000)
+                        .par_bridge()
+                        .map(|(index, line)| {
+                            parse_line(uuid, name.clone(), index, line, &state.message_regex)
+                        })
+                        .filter_map(|message| message)
+                        .collect();
+
+                    all_messages.append(&mut messages);
                 }
                 Err(_) => {
                     return Err(bad_request("Invalid file found"));
@@ -69,5 +109,46 @@ pub async fn extract_zip(
             }
         }
     }
+
+    println!("{:?}", files);
+
+    stores::file_store::store_files(files, &state.pool).await;
+    stores::file_store::store_messages(all_messages, &state.pool).await;
+
     Ok(())
+}
+
+fn parse_line(
+    session_id: Uuid,
+    file_name: String,
+    index: usize,
+    line: &str,
+    message_regex: &Regex,
+) -> Option<LogMessage> {
+    message_regex.captures(line).map(|captures| {
+        let mut captures = captures
+            .iter()
+            .skip(1)
+            .map(|capture| capture.map(|match_| match_.as_str().trim().to_string()));
+
+        let date_format =
+            format_description!("[year]-[month]-[day] [hour]:[minute]:[second],[subsecond]");
+        let date =
+            PrimitiveDateTime::parse(&captures.next().unwrap().unwrap(), date_format).unwrap();
+
+        LogMessage {
+            session_id,
+            file_name,
+            entry_nr: index as i32,
+            creation_date: date,
+            classification: captures.next().unwrap().unwrap().to_lowercase(),
+            service_ip: captures.next().unwrap(),
+            user_id: captures.next().unwrap(),
+            user_session_id: captures.next().unwrap(),
+            java_class: captures.next().unwrap().unwrap(),
+            content: captures.next().unwrap().unwrap(),
+            sql_raw: None,
+            sql_data: None,
+        }
+    })
 }

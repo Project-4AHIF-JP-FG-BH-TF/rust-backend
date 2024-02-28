@@ -29,19 +29,18 @@ CREATE TABLE loggaroo.file
     CONSTRAINT fk_session_id FOREIGN KEY (session_id) REFERENCES loggaroo.session (session_id) ON DELETE CASCADE
 );
 
-CREATE TYPE classification AS ENUM ('info', 'error');
 CREATE TABLE loggaroo.log_entry
 (
-    session_id      UUID           NOT NULL,
-    file_name       VARCHAR        NOT NULL,
-    entry_nr        INT            NOT NULL,
-    creation_date   TIMESTAMP      NOT NULL,
-    classification  CLASSIFICATION NOT NULL,
+    session_id      UUID      NOT NULL,
+    file_name       VARCHAR   NOT NULL,
+    entry_nr        INT       NOT NULL,
+    creation_date   TIMESTAMP NOT NULL,
+    classification  VARCHAR   NOT NULL CHECK ( classification IN ('info', 'warn') ),
     service_ip      VARCHAR,
     user_id         VARCHAR,
     user_session_id VARCHAR,
-    java_class      VARCHAR        NOT NULL,
-    content         VARCHAR        NOT NULL,
+    java_class      VARCHAR   NOT NULL,
+    content         VARCHAR   NOT NULL,
     sql_raw         VARCHAR,
     sql_data        VARCHAR,
 

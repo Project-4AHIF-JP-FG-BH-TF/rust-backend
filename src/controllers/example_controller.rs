@@ -13,14 +13,10 @@ pub fn get_router(shared_state: SharedState) -> Router {
 }
 
 async fn greet(
-    State(state): State<SharedState>,
+    State(_state): State<SharedState>,
     Query(params): Query<HashMap<String, String>>,
 ) -> (StatusCode, String) {
     // IGNORE
-    let _ = state.pool.size();
-
-    let _date = sqlx::query!("SELECT NOW() as now");
-
     let name = params.get("name").cloned();
 
     match services::example_service::greet(name).await {
