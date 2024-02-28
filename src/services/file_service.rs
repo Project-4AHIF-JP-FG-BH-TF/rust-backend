@@ -10,7 +10,7 @@ use std::io::Read;
 use tar::Archive;
 use time::macros::format_description;
 use time::PrimitiveDateTime;
-use tracing::{debug, info};
+use tracing::info;
 use uuid::Uuid;
 use xz::read::XzDecoder;
 
