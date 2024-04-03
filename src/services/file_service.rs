@@ -154,12 +154,6 @@ fn parse_line(
             sql_data: None,
         }
     });
-
-    if result.is_none() {
-        println!("ERROR: {}", line);
-    } else {
-        // println!("{}", line);
-    }
-
+    
     result
 }
