@@ -15,19 +15,13 @@ First make sure the database is RUNNING
 
 ### Querying
 
-
-The macros you use are sqlx::query!(SQL_QUERY) and sqlx::query_as!(SQL_QUERY)
-
-More under ['sqlx documentation'](https://docs.rs/sqlx/latest/sqlx/)
+For communicating with the db please take a look at the [diesel docs](https://diesel.rs/guides/getting-started.html)
 
 ### Check Queries
 
 cargo install diesel_cli --no-default-features --features "postgres"
 
 https://github.com/diesel-rs/diesel/blob/master/guide_drafts/backend_installation.md
-
-To check if a query is valid you can run `cargo sqlx prepare` \
-This validates your query (NEED THE DATABASE TO RUN). It is also run when building.
 
 ## Docker
 
