@@ -12,8 +12,6 @@ use tracing::{info, warn};
 use uuid::Uuid;
 use xz::read::XzDecoder;
 
-
-
 fn internal_error<S: Into<String>>(message: S) -> (StatusCode, String) {
     (StatusCode::INTERNAL_SERVER_ERROR, message.into())
 }
@@ -95,11 +93,11 @@ pub async fn extract_zip(
                             None => match messages.last_mut() {
                                 None => warn!("Invalid line without previous line!"),
                                 Some(message) => message.content.push_str(line),
-                            }
+                            },
                             Some(message) => messages.push(message),
                         };
                     }
-                    
+
                     all_messages.append(&mut messages);
 
                     info!("Finished parsing");
