@@ -155,11 +155,5 @@ fn parse_line(
         }
     });
 
-    if result.is_none() {
-        println!("ERROR: {}", line);
-    } else {
-        // println!("{}", line);
-    }
-
     result
 }
