@@ -154,6 +154,6 @@ fn parse_line(
             sql_data: None,
         }
     });
-    
+
     result
 }
