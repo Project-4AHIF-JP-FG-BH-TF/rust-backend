@@ -3,14 +3,12 @@ use crate::stores;
 use crate::utils::shared_state::SharedState;
 use axum::extract::Multipart;
 use axum::http::StatusCode;
-use rayon::iter::ParallelBridge;
-use rayon::iter::ParallelIterator;
 use regex::Regex;
 use std::io::Read;
 use tar::Archive;
 use time::macros::format_description;
 use time::PrimitiveDateTime;
-use tracing::info;
+use tracing::{info, warn};
 use uuid::Uuid;
 use xz::read::XzDecoder;
 
@@ -89,15 +87,16 @@ pub async fn extract_zip(
 
                     info!("Started parsing");
 
-                    let mut messages: Vec<_> = content
-                        .lines()
-                        .enumerate()
-                        .par_bridge()
-                        .map(|(index, line)| {
-                            parse_line(uuid, name.clone(), index, line, &state.message_regex)
-                        })
-                        .filter_map(|message| message)
-                        .collect();
+                    let mut messages: Vec<LogMessage> = vec![];
+                    for (index, line) in content.lines().enumerate() {
+                        match parse_line(uuid, name.clone(), index, line, &state.message_regex) {
+                            None => match messages.last_mut() {
+                                None => warn!("Invalid line without previous line!"),
+                                Some(message) => message.content.push_str(line),
+                            },
+                            Some(message) => messages.push(message),
+                        };
+                    }
 
                     all_messages.append(&mut messages);
 
@@ -129,7 +128,7 @@ fn parse_line(
     line: &str,
     message_regex: &Regex,
 ) -> Option<LogMessage> {
-    message_regex.captures(line).map(|captures| {
+    let result = message_regex.captures(line).map(|captures| {
         let mut captures = captures
             .iter()
             .skip(1)
@@ -154,5 +153,13 @@ fn parse_line(
             sql_raw: None,
             sql_data: None,
         }
-    })
+    });
+
+    if result.is_none() {
+        println!("ERROR: {}", line);
+    } else {
+        // println!("{}", line);
+    }
+
+    result
 }
