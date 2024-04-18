@@ -109,19 +109,11 @@ pub async fn extract_zip(
                                 for value in values {
                                     statement = statement.replace('?', &value);
                                 }
-                                messages.push(LogMessage {
-                                    session_id: sql_message.session_id,
-                                    file_name: sql_message.file_name,
-                                    entry_nr: sql_message.entry_nr,
-                                    creation_date: sql_message.creation_date,
-                                    classification: sql_message.classification,
-                                    service_ip: sql_message.service_ip,
-                                    user_id: sql_message.user_id,
-                                    user_session_id: sql_message.user_session_id,
-                                    java_class: sql_message.java_class,
+                    messages.push(LogMessage {
                                     content: statement,
                                     sql_raw: Some(sql_message.content),
                                     sql_data: Some(message.content),
+                                    ..sql_message
                                 })
                             } else {
                                 messages.push(message)
