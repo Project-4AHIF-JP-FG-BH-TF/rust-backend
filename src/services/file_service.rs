@@ -106,7 +106,6 @@ pub async fn extract_zip(
 
                                 let sql_message = messages.remove(index.unwrap());
                                 let mut statement = sql_message.content.clone();
-                                println!("{}\n\n", statement);
                                 for value in values {
                                     statement = statement.replace('?', &value);
                                 }
