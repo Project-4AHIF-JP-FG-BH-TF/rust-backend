@@ -109,7 +109,7 @@ pub async fn extract_zip(
                                 for value in values {
                                     statement = statement.replace('?', &value);
                                 }
-                    messages.push(LogMessage {
+                                messages.push(LogMessage {
                                     content: statement,
                                     sql_raw: Some(sql_message.content),
                                     sql_data: Some(message.content),
