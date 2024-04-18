@@ -33,7 +33,6 @@ fn message_regex() -> Regex {
     let regex = format!(
         r"^({date_part})\s*({classification_part})\s*\[({ip_part})?\s*]\s*\[({user_id_part})?\s*]\s*\[({session_id_part})?\s*]\s*\[({java_class_part})\s*]\s*({content_part})$"
     );
-    println!("{}", regex);
 
     Regex::new(&regex).unwrap()
 }
