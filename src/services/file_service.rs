@@ -89,13 +89,49 @@ pub async fn extract_zip(
 
                     let mut messages: Vec<LogMessage> = vec![];
                     for (index, line) in content.lines().enumerate() {
-                        match parse_line(uuid, name.clone(), index, line, &state.message_regex) {
-                            None => match messages.last_mut() {
-                                None => warn!("Invalid line without previous line!"),
-                                Some(message) => message.content.push_str(line),
-                            },
-                            Some(message) => messages.push(message),
-                        };
+                        let result =
+                            parse_line(uuid, name.clone(), index, line, &state.message_regex);
+                        if let Some(message) = result {
+                            if let Some(values) = parse_values(&message.content) {
+                                let index = messages
+                                    .iter_mut()
+                                    .enumerate()
+                                    .rev()
+                                    .find(|(_, search)| search.session_id == message.session_id)
+                                    .map(|(index, _)| index);
+                                if index.is_none() {
+                                    warn!("Values without previous sql statement");
+                                    continue;
+                                }
+
+                                let sql_message = messages.remove(index.unwrap());
+                                let mut statement = sql_message.content.clone();
+                                println!("{}\n\n", statement);
+                                for value in values {
+                                    statement = statement.replace('?', &value);
+                                }
+                                messages.push(LogMessage {
+                                    session_id: sql_message.session_id,
+                                    file_name: sql_message.file_name,
+                                    entry_nr: sql_message.entry_nr,
+                                    creation_date: sql_message.creation_date,
+                                    classification: sql_message.classification,
+                                    service_ip: sql_message.service_ip,
+                                    user_id: sql_message.user_id,
+                                    user_session_id: sql_message.user_session_id,
+                                    java_class: sql_message.java_class,
+                                    content: statement,
+                                    sql_raw: Some(sql_message.content),
+                                    sql_data: Some(message.content),
+                                })
+                            } else {
+                                messages.push(message)
+                            }
+                        } else if let Some(last_message) = messages.last_mut() {
+                            last_message.content.push_str(line);
+                        } else {
+                            warn!("Invalid line without previous line!")
+                        }
                     }
 
                     all_messages.append(&mut messages);
@@ -119,6 +155,19 @@ pub async fn extract_zip(
     info!("Finished writing to DB");
 
     Ok(())
+}
+
+fn parse_values(content: &str) -> Option<Vec<String>> {
+    content.find("values:").map(|index| {
+        content[index + 7..]
+            .trim()
+            .trim_end_matches(';')
+            .split(';')
+            .filter_map(|value| value.find('=').map(|index| (value, index)))
+            .map(|(value, index)| &value[index + 1..])
+            .map(|value| value.to_string())
+            .collect()
+    })
 }
 
 fn parse_line(
