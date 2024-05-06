@@ -57,7 +57,7 @@ pub async fn extract_zip(
         for entry in entries {
             match entry {
                 Ok(mut entry) => {
-                    if entry.path().unwrap().extension().unwrap().to_str().unwrap() != "txt" {
+                    if entry.path().unwrap().extension().unwrap().to_str().unwrap() == "json" {
                         continue;
                     }
                     
