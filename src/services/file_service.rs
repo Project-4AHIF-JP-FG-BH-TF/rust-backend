@@ -60,7 +60,7 @@ pub async fn extract_zip(
                     if entry.path().unwrap().extension().unwrap().to_str().unwrap() == "json" {
                         continue;
                     }
-                    
+
                     let name = entry
                         .path()
                         .iter()
