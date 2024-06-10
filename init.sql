@@ -6,10 +6,17 @@ DROP TYPE IF EXISTS classification;
 
 DROP SCHEMA IF EXISTS loggaroo;
 
+ALTER SYSTEM SET max_wal_senders = 0;
+ALTER SYSTEM SET wal_level = minimal;
+ALTER SYSTEM SET fsync = off;
+ALTER SYSTEM SET full_page_writes = off;
+ALTER SYSTEM SET synchronous_commit = off;
+
 -- CREATE EVERYTHING
 CREATE SCHEMA loggaroo;
 
-CREATE TABLE loggaroo.session
+CREATE
+UNLOGGED TABLE loggaroo.session
 (
     session_id   UUID      NOT NULL DEFAULT GEN_RANDOM_UUID(),
     last_refresh TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -17,7 +24,8 @@ CREATE TABLE loggaroo.session
     CONSTRAINT pk_session PRIMARY KEY (session_id)
 );
 
-CREATE TABLE loggaroo.file
+CREATE
+UNLOGGED TABLE loggaroo.file
 (
     session_id           UUID    NOT NULL,
     file_name            VARCHAR NOT NULL,
@@ -29,7 +37,8 @@ CREATE TABLE loggaroo.file
     CONSTRAINT fk_session_id FOREIGN KEY (session_id) REFERENCES loggaroo.session (session_id) ON DELETE CASCADE
 );
 
-CREATE TABLE loggaroo.log_entry
+CREATE
+UNLOGGED TABLE loggaroo.log_entry
 (
     session_id      UUID      NOT NULL,
     file_name       VARCHAR   NOT NULL,
